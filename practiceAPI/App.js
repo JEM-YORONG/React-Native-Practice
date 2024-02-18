@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import Modal from "react-native-modal";
 import {
   StyleSheet,
   Text,
@@ -75,6 +76,67 @@ export default function App() {
     }
   };
 
+  // Update API data
+  // get, set update title
+  const [titleUpdate, setTitleUpdate] = useState("");
+  // get, set update title Id
+  const [titleId, setTitleId] = useState("");
+  const updateApiData = async (Id) => {
+    // check empty field
+    if (titleUpdate === "") {
+      Alert.alert("Oops!", "Empty field detected.", [
+        {
+          text: "Enter Title",
+          onPress: () => {
+            console.log("Enter Title");
+          },
+        },
+      ]);
+    } else {
+      // data to update
+      const data = {
+        id: titleId,
+        title: titleUpdate,
+        date: currentDate,
+      };
+      const apiUrl = `http://10.0.2.2:3000/todos/${Id}`;
+      try {
+        const response = await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        console.log(result);
+        getApiData();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+  // modal for edit checker
+  const [isModalVisible, setModalVisible] = useState(false);
+  const toggleModal = () => {
+    setModalVisible(false);
+  };
+
+  // Delete API data
+  const deleteApiData = async (id) => {
+    const apiUrl = `http://10.0.2.2:3000/todos/${id}`;
+    try {
+      const response = await fetch(apiUrl, {
+        method: "DELETE",
+      });
+      const result = await response.json();
+      console.log(result);
+      getApiData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // load response
   useEffect(() => {
     getApiData();
@@ -105,6 +167,40 @@ export default function App() {
         >
           <Text style={{ textAlign: "center" }}>Save</Text>
         </TouchableOpacity>
+        {/* edit modal */}
+        <Modal
+          isVisible={isModalVisible}
+          style={styles.modalEdit}
+          onBackdropPress={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContentContainer}>
+            <Text style={styles.todoTitle}>Update To-Do Title</Text>
+            <TextInput
+              style={styles.editTitleInput}
+              value={titleUpdate}
+              placeholder="Enter new title"
+              onChangeText={(text) => setTitleUpdate(text)}
+            />
+            {/* modal button */}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                onPress={() => {
+                  updateApiData(titleId);
+                  toggleModal();
+                }}
+                style={styles.modalButton}
+              >
+                <Text>Update</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={toggleModal}
+                style={styles.modalButton}
+              >
+                <Text>cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
       {/* data display container */}
       <FlatList
@@ -116,17 +212,22 @@ export default function App() {
             <TouchableOpacity
               style={styles.displayContainer}
               onLongPress={() => {
-                Alert.alert(item.title, "", [
+                Alert.alert("Item ID: " + item.id, "Title: " + item.title, [
                   {
                     text: "EDIT",
                     onPress: () => {
-                      console.log("EDIT");
+                      console.log("EDIT - " + item.id);
+                      setModalVisible(true);
+                      setTitleId(item.id);
+                      setTitleUpdate(item.title);
+                      console.log(item.id + " : " + item.title);
                     },
                   },
                   {
                     text: "DELETE",
                     onPress: () => {
-                      console.log("DELETE");
+                      console.log("DELETE - " + item.id);
+                      deleteApiData(item.id);
                     },
                   },
                 ]);
@@ -192,5 +293,45 @@ const styles = StyleSheet.create({
   },
   addContainer: {
     margin: 5,
+  },
+  modalEdit: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    minHeight: 100,
+    maxHeight: 200,
+    marginTop: "auto",
+  },
+  modalContentContainer: {
+    flex: 1,
+    borderWidth: 1,
+    alignSelf: "stretch",
+    alignItems: "center",
+    padding: 10,
+  },
+  modalButton: {
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 10,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "stretch",
+    justifyContent: "space-around",
+    margin: 10,
+  },
+  editTitleInput: {
+    borderWidth: 1,
+    alignSelf: "stretch",
+    margin: 10,
+    borderRadius: 10,
+    textAlign: "center",
+  },
+  todoTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    padding: 10,
   },
 });

@@ -7,6 +7,7 @@ import {
   StatusBar,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 
 export default function App() {
@@ -14,12 +15,12 @@ export default function App() {
   const [data, setData] = useState([]);
   // fetch api data
   const getApiData = async () => {
-    const apiUrl = "https://jsonplaceholder.typicode.com/posts";
+    const apiUrl = "http://10.0.2.2:3000/todos";
     try {
       const response = await fetch(apiUrl);
       const result = await response.json();
       setData(result);
-      // console.log(result);
+      //console.log(result);
     } catch (error) {
       console.log(error);
     }
@@ -39,15 +40,38 @@ export default function App() {
         showsVerticalScrollIndicator={false}
         data={data}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          // data holder display
-          <View style={styles.dataHolder}>
-            <Text style={styles.defaultText}>User ID: {item.userId}</Text>
-            <Text style={styles.defaultText}>Item ID: {item.id}</Text>
-            <Text style={styles.defaultText}>Title: {item.title}</Text>
-            <Text style={styles.defaultText}>Content: {item.body}</Text>
-          </View>
-        )}
+        renderItem={({ item }) =>
+          data.length ? ( // data holder display
+            <TouchableOpacity
+              onLongPress={() => {
+                Alert.alert(item.title, "", [
+                  {
+                    text: "EDIT",
+                    onPress: () => {
+                      console.log("EDIT");
+                    },
+                  },
+                  {
+                    text: "DELETE",
+                    onPress: () => {
+                      console.log("DELETE");
+                    },
+                  },
+                ]);
+              }}
+            >
+              <View style={styles.dataHolder}>
+                <Text style={styles.defaultText}>Item ID: {item.id}</Text>
+                <Text style={styles.defaultText}>Title: {item.title}</Text>
+                <Text style={styles.defaultText}>Date: {item.date}</Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.dataHolder}>
+              <Text style={styles.defaultText}>NO TO-TO</Text>
+            </View>
+          )
+        }
         style={styles.displayContainer}
       />
     </View>
